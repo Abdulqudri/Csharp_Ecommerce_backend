@@ -151,14 +151,14 @@ namespace Ecommerce.API.Services.Implementations
             };
         }
 
-        public async Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        public async Task<bool> ChangePasswordAsync(string UserId, ChangePasswordRequest request)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(UserId);
             if (user == null)
             {
                 throw new ArgumentException("User not found.");
             }
-            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -178,6 +178,24 @@ namespace Ecommerce.API.Services.Implementations
             user.RefreshToken = null;
             user.RefreshTokenExpiry = null;
             await _userManager.UpdateAsync(user);
+        }
+        public async Task<UserResponse?> GetUserProfileAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return null;
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new UserResponse
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Roles = roles.ToList(),
+                CreatedAt = user.CreatedAt
+            };
         }
 
     }
