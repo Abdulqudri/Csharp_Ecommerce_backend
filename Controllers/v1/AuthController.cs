@@ -76,6 +76,8 @@ namespace Ecommerce.API.Controllers.v1
             if (UserId == null)
                 return Unauthorized();
             var response = await _authService.GetUserProfileAsync(UserId.ToString());
+            if (response == null)
+                return NotFound();
             return Ok(response);
         }
 

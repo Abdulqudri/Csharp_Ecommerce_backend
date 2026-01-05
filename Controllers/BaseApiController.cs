@@ -11,6 +11,6 @@ namespace Ecommerce.API.Controllers;
 [Authorize]
 public class BaseApiController : ControllerBase
 {
-    protected string? UserId => User?.FindFirst("sub")?.Value;
+    protected string? UserId => User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
     protected string? UserEmail => User?.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
 }
