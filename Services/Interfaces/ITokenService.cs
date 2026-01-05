@@ -6,6 +6,6 @@ namespace Ecommerce.API.Services.Interface
     {
         string GenerateJwtToken(ApplicationUser user, IList<string> roles);
         string GenerateRefreshToken();
-        Task<ApplicationUser?> GetUserFromToken(string token);
+        Task<ApplicationUser?> GetUserFromTokenAsync(string token);
     }
 }
