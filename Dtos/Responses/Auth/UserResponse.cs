@@ -9,5 +9,6 @@ namespace Ecommerce.API.Dtos.Responses.Auth
         public string FullName => $"{FirstName} {LastName}";
         public List<string> Roles { get; set; } = new List<string>();
         public DateTime CreatedAt { get; set; }
+        public bool IsActive { get; set; }
     }
 }
