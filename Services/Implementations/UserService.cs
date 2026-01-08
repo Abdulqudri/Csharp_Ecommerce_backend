@@ -1,3 +1,5 @@
+using AutoMapper;
+using AutoMapper.Configuration.Annotations;
 using Ecommerce.API.Data.Entities;
 using Ecommerce.API.Dtos.Requests.Users;
 using Ecommerce.API.Dtos.Responses.Auth;
@@ -7,12 +9,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.API.Services.Implementations
 {
+
     public class UserService : IUserService
     {
+        private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserService(UserManager<ApplicationUser> userManager)
+        public UserService(IMapper mapper, UserManager<ApplicationUser> userManager)
         {
+            _mapper = mapper;
             _userManager = userManager;
         }
 
@@ -23,7 +28,9 @@ namespace Ecommerce.API.Services.Implementations
                 return null;
 
             var roles = await _userManager.GetRolesAsync(user);
-            return MapToUserResponse(user, roles);
+            var response = _mapper.Map<UserResponse>(user);
+            response.Roles = roles.ToList();
+            return response;
         }
 
         public async Task<UserResponse?> GetUserByEmailAsync(string email)
@@ -33,21 +40,23 @@ namespace Ecommerce.API.Services.Implementations
                 return null;
 
             var roles = await _userManager.GetRolesAsync(user);
-            return MapToUserResponse(user, roles);
+            var response = _mapper.Map<UserResponse>(user);
+            response.Roles = roles.ToList();
+            return response;
         }
 
         public async Task<List<UserResponse>> GetAllUsersAsync()
         {
             var users = await _userManager.Users.ToListAsync();
-            var userResponses = new List<UserResponse>();
+            var responses = _mapper.Map<List<UserResponse>>(users);
 
-            foreach (var user in users)
+            for (int i = 0; i < users.Count; i++)
             {
-                var roles = await _userManager.GetRolesAsync(user);
-                userResponses.Add(MapToUserResponse(user, roles));
+                var roles = await _userManager.GetRolesAsync(users[i]);
+                responses[i].Roles = roles.ToList();
             }
 
-            return userResponses;
+            return responses;
         }
 
         public async Task<bool> UpdateUserAsync(string userId, UpdateUserRequest request)
@@ -66,7 +75,7 @@ namespace Ecommerce.API.Services.Implementations
                 user.PhoneNumber = request.PhoneNumber;
 
             user.UpdatedAt = DateTime.UtcNow;
-            
+
             var result = await _userManager.UpdateAsync(user);
             return result.Succeeded;
         }
@@ -79,24 +88,9 @@ namespace Ecommerce.API.Services.Implementations
 
             user.IsActive = false;
             user.UpdatedAt = DateTime.UtcNow;
-            
+
             var result = await _userManager.UpdateAsync(user);
             return result.Succeeded;
-        }
-
-        // Reusable mapping method
-        private UserResponse MapToUserResponse(ApplicationUser user, IList<string> roles)
-        {
-            return new UserResponse
-            {
-                Id = user.Id,
-                Email = user.Email!,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Roles = roles.ToList(),
-                CreatedAt = user.CreatedAt,
-                IsActive = user.IsActive
-            };
         }
     }
 }

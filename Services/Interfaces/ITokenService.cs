@@ -1,6 +1,6 @@
 using Ecommerce.API.Data.Entities;
 
-namespace Ecommerce.API.Services.Interface
+namespace Ecommerce.API.Services.Interfaces
 {
     public interface ITokenService
     {

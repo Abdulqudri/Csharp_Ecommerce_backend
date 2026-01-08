@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Ecommerce.API.Constants;
 using Ecommerce.API.Data.Entities;
-using Ecommerce.API.Services.Interface;
+using Ecommerce.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 

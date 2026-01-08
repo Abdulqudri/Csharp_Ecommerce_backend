@@ -1,9 +1,10 @@
+using AutoMapper;
 using Ecommerce.API.Constants;
 using Ecommerce.API.Data.Contexts;
 using Ecommerce.API.Data.Entities;
 using Ecommerce.API.Dtos.Requests.Auth;
 using Ecommerce.API.Dtos.Responses.Auth;
-using Ecommerce.API.Services.Interface;
+using Ecommerce.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,18 +17,21 @@ namespace Ecommerce.API.Services.Implementations
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ITokenService tokenService,
-            ApplicationDbContext context
+            ApplicationDbContext context,
+            IMapper mapper
             )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -49,22 +53,16 @@ namespace Ecommerce.API.Services.Implementations
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(AppConstants.RefreshTokenExpiryDays);
             await _userManager.UpdateAsync(user);
 
+            var userResponse = _mapper.Map<UserResponse>(user);
+            userResponse.Roles = roles.ToList();
+
             return new AuthResponse
             {
                 Token = token,
                 RefreshToken = refreshToken,
                 TokenExpiry = DateTime.UtcNow.AddMinutes(AppConstants.JwtTokenExpiryMinutes),
                 RefreshTokenExpiry = user.RefreshTokenExpiry.Value,
-                User = new UserResponse
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email!,
-                    Roles = roles.ToList(),
-                    CreatedAt = user.CreatedAt,
-
-                }
+                User = userResponse
             };
         }
 
@@ -98,6 +96,9 @@ namespace Ecommerce.API.Services.Implementations
 
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(AppConstants.RefreshTokenExpiryDays);
             await _userManager.UpdateAsync(user);
+            var userResponse = _mapper.Map<UserResponse>(user);
+            userResponse.Roles = roles.ToList();
+
 
             return new AuthResponse
             {
@@ -105,15 +106,7 @@ namespace Ecommerce.API.Services.Implementations
                 TokenExpiry = DateTime.UtcNow.AddMinutes(AppConstants.JwtTokenExpiryMinutes),
                 RefreshToken = refreshToken,
                 RefreshTokenExpiry = user.RefreshTokenExpiry.Value,
-                User = new UserResponse
-                {
-                    Id = user.Id,
-                    Email = user.Email!,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Roles = roles.ToList(),
-                    CreatedAt = user.CreatedAt
-                }
+                User = userResponse
             };
 
         }
@@ -132,6 +125,9 @@ namespace Ecommerce.API.Services.Implementations
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(AppConstants.RefreshTokenExpiryDays);
             await _userManager.UpdateAsync(user);
+            var userResponse = _mapper.Map<UserResponse>(user);
+            userResponse.Roles = roles.ToList();
+
 
             return new AuthResponse
             {
@@ -139,15 +135,7 @@ namespace Ecommerce.API.Services.Implementations
                 TokenExpiry = DateTime.UtcNow.AddMinutes(AppConstants.JwtTokenExpiryMinutes),
                 RefreshToken = newRefreshToken,
                 RefreshTokenExpiry = user.RefreshTokenExpiry.Value,
-                User = new UserResponse
-                {
-                    Id = user.Id,
-                    Email = user.Email!,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Roles = roles.ToList(),
-                    CreatedAt = user.CreatedAt
-                }
+                User = userResponse
             };
         }
 
@@ -186,16 +174,10 @@ namespace Ecommerce.API.Services.Implementations
                 return null;
 
             var roles = await _userManager.GetRolesAsync(user);
+            var userResponse = _mapper.Map<UserResponse>(user);
+            userResponse.Roles = roles.ToList();
 
-            return new UserResponse
-            {
-                Id = user.Id,
-                Email = user.Email!,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Roles = roles.ToList(),
-                CreatedAt = user.CreatedAt
-            };
+            return userResponse;
         }
 
     }

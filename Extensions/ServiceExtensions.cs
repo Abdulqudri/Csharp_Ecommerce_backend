@@ -1,5 +1,5 @@
 using Ecommerce.API.Services.Implementations;
-using Ecommerce.API.Services.Interface;
+using Ecommerce.API.Services.Interfaces;
 
 namespace Ecommerce.API.Extensions
 {
@@ -14,6 +14,7 @@ namespace Ecommerce.API.Extensions
             // services.AddScoped<IOrderService, OrderService>();
             // services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IUserService, UserService>();
 
             // Register repositories
             // services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
