@@ -15,18 +15,23 @@ namespace Ecommerce.API.Helpers
 
             // Product mappings
             CreateMap<Product, ProductResponse>()
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => new CategoryResponse
-                {
-                    Id = src.Category.Id,
-                    Name = src.Category.Name
-                }))
-                .ForMember(dest => dest.FinalPrice, opt => opt.MapFrom(src => src.DiscountPrice ?? src.Price));
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
+                .ForMember(dest => dest.Reviews, opt => opt.MapFrom(src => src.Reviews))
+                .ForMember(dest => dest.AverageRating, opt => opt.Ignore())
+                .ForMember(dest => dest.TotalReviews, opt => opt.Ignore());
 
-            // CreateMap<Category, CategoryResponse>();
-            // CreateMap<Review, ReviewResponse>()
-            //     .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.User.FirstName} {src.User.LastName}"));
+            CreateMap<Product, ProductListResponse>()
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
+                .ForMember(dest => dest.AverageRating, opt => opt.Ignore())
+                .ForMember(dest => dest.TotalReviews, opt => opt.Ignore());
 
-            // // Order mappings
+            CreateMap<Category, CategoryResponse>();
+            
+            CreateMap<Review, ReviewResponse>()
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => 
+                    $"{src.User.FirstName} {src.User.LastName}"));
+
+            // // Order mappings (if needed)
             // CreateMap<Order, OrderResponse>();
             // CreateMap<OrderItem, OrderItemResponse>()
             //     .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name));

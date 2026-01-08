@@ -3,96 +3,97 @@ using Ecommerce.API.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Ecommerce.API.Data.Contexts;
+namespace Ecommerce.API.Data.Contexts
+{
     public static class ApplicationDbContextSeed
     {
-        public static void Seed(this ModelBuilder builder)
+        public static async Task SeedAsync(UserManager<ApplicationUser> userManager, 
+            RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
         {
             // Seed Roles
-            var adminRole = new IdentityRole
+            if (!await roleManager.RoleExistsAsync(RoleConstants.Admin))
             {
-                Id = "admin-role-id",
-                Name = RoleConstants.Admin,
-                NormalizedName = RoleConstants.Admin.ToUpper()
-            };
+                await roleManager.CreateAsync(new IdentityRole(RoleConstants.Admin));
+            }
 
-            var userRole = new IdentityRole
+            if (!await roleManager.RoleExistsAsync(RoleConstants.User))
             {
-                Id = "user-role-id",
-                Name = RoleConstants.User,
-                NormalizedName = RoleConstants.User.ToUpper()
-            };
-
-            builder.Entity<IdentityRole>().HasData(adminRole, userRole);
+                await roleManager.CreateAsync(new IdentityRole(RoleConstants.User));
+            }
 
             // Seed Admin User
-            var hasher = new PasswordHasher<ApplicationUser>();
-            var adminUser = new ApplicationUser
+            var adminEmail = "admin@example.com";
+            if (await userManager.FindByEmailAsync(adminEmail) == null)
             {
-                Id = "admin-user-id",
-                UserName = "admin@example.com",
-                NormalizedUserName = "ADMIN@EXAMPLE.COM",
-                Email = "admin@example.com",
-                NormalizedEmail = "ADMIN@EXAMPLE.COM",
-                EmailConfirmed = true,
-                FirstName = "Admin",
-                LastName = "User",
-                SecurityStamp = Guid.NewGuid().ToString(),
-                PasswordHash = hasher.HashPassword(null!, "Admin@123")
-            };
-
-            builder.Entity<ApplicationUser>().HasData(adminUser);
-
-            // Assign Admin Role to Admin User
-            builder.Entity<IdentityUserRole<string>>().HasData(
-                new IdentityUserRole<string>
+                var adminUser = new ApplicationUser
                 {
-                    RoleId = adminRole.Id,
-                    UserId = adminUser.Id
-                }
-            );
-
-            // Seed Categories
-            var categories = new List<Category>
-            {
-                new Category { Id = 1, Name = "Electronics", Description = "Electronic devices", CreatedAt = DateTime.UtcNow, IsActive = true },
-                new Category { Id = 2, Name = "Clothing", Description = "Men and women clothing", CreatedAt = DateTime.UtcNow, IsActive = true },
-                new Category { Id = 3, Name = "Books", Description = "All kinds of books", CreatedAt = DateTime.UtcNow, IsActive = true }
-            };
-
-            builder.Entity<Category>().HasData(categories);
-
-            // Seed Products
-            var products = new List<Product>
-            {
-                new Product
-                {
-                    Id = 1,
-                    Name = "Wireless Headphones",
-                    Description = "Noise cancelling wireless headphones",
-                    Price = 99.99m,
-                    StockQuantity = 50,
-                    SKU = "WH-001",
-                    CategoryId = 1,
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FirstName = "Admin",
+                    LastName = "User",
+                    EmailConfirmed = true,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    ImageUrl = "https://example.com/images/headphones.jpg"
-                },
-                new Product
-                {
-                    Id = 2,
-                    Name = "T-Shirt",
-                    Description = "Cotton T-Shirt",
-                    Price = 19.99m,
-                    StockQuantity = 100,
-                    SKU = "TS-001",
-                    CategoryId = 2,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    ImageUrl = "https://example.com/images/tshirt.jpg"
-                }
-            };
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            builder.Entity<Product>().HasData(products);
+                var result = await userManager.CreateAsync(adminUser, "Admin@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, RoleConstants.Admin);
+                }
+            }
+
+            // Seed Categories if none exist
+            if (!await context.Categories.AnyAsync())
+            {
+                var categories = new List<Category>
+                {
+                    new Category { Name = "Electronics", Description = "Electronic devices", CreatedAt = DateTime.UtcNow, IsActive = true },
+                    new Category { Name = "Clothing", Description = "Men and women clothing", CreatedAt = DateTime.UtcNow, IsActive = true },
+                    new Category { Name = "Books", Description = "All kinds of books", CreatedAt = DateTime.UtcNow, IsActive = true }
+                };
+
+                await context.Categories.AddRangeAsync(categories);
+                await context.SaveChangesAsync();
+            }
+
+            // Seed Products if none exist
+            if (!await context.Products.AnyAsync())
+            {
+                var electronicsCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Electronics");
+                var clothingCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Clothing");
+
+                var products = new List<Product>
+                {
+                    new Product
+                    {
+                        Name = "Wireless Headphones",
+                        Description = "Noise cancelling wireless headphones",
+                        Price = 99.99m,
+                        StockQuantity = 50,
+                        SKU = "WH-001",
+                        CategoryId = electronicsCategory?.Id ?? 1,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        ImageUrl = "https://example.com/images/headphones.jpg"
+                    },
+                    new Product
+                    {
+                        Name = "T-Shirt",
+                        Description = "Cotton T-Shirt",
+                        Price = 19.99m,
+                        StockQuantity = 100,
+                        SKU = "TS-001",
+                        CategoryId = clothingCategory?.Id ?? 2,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        ImageUrl = "https://example.com/images/tshirt.jpg"
+                    }
+                };
+
+                await context.Products.AddRangeAsync(products);
+                await context.SaveChangesAsync();
+            }
         }
     }
+}

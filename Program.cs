@@ -2,11 +2,14 @@ using System.Text;
 using Ecommerce.API.Data.Contexts;
 using Ecommerce.API.Data.Entities;
 using Ecommerce.API.Extensions;
+using Ecommerce.API.Filters;
+using Ecommerce.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -105,6 +108,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOrUser", policy => policy.RequireRole("Admin", "User"));
 });
 
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
 // Add Application Services
 builder.Services.AddApplicationServices();
 
@@ -116,9 +122,14 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ECommerce API",
+        Title = "Ecommerce API",
         Version = "v1",
-        Description = "ECommerce API with JWT Authentication"
+        Description = "Ecommerce API with JWT Authentication",
+        Contact = new OpenApiContact
+        {
+            Name = "Ecommerce API Support",
+            Email = "support@ecommerce.com"
+        }
     });
 
     // Add JWT Authentication to Swagger
@@ -142,11 +153,17 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            Array.Empty<string>()
+            new string[] { }
         }
     });
 
-    c.OperationFilter<SwaggerDefaultValues>();
+    // Optional: Include XML comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 // Add CORS
@@ -168,8 +185,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ECommerce API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce API v1");
         c.RoutePrefix = string.Empty;
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
     app.UseDeveloperExceptionPage();
 }
@@ -193,11 +211,13 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+        await context.Database.MigrateAsync();
+
+        // Seed roles and admin user
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        await context.Database.MigrateAsync();
-        // Additional seeding if needed
+        await ApplicationDbContextSeed.SeedAsync(userManager, roleManager, context);
     }
     catch (Exception ex)
     {

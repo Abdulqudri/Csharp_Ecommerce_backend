@@ -1,5 +1,9 @@
+using Ecommerce.API.Data.Entities;
+using Ecommerce.API.Repository.Implementations;
+using Ecommerce.API.Repository.Interfaces;
 using Ecommerce.API.Services.Implementations;
 using Ecommerce.API.Services.Interfaces;
+
 
 namespace Ecommerce.API.Extensions
 {
@@ -10,16 +14,18 @@ namespace Ecommerce.API.Extensions
             // Register services
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
-            // services.AddScoped<IProductService, ProductService>();
-            // services.AddScoped<IOrderService, OrderService>();
-            // services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             // Register repositories
-            // services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            // services.AddScoped<IProductRepository, ProductRepository>();
-            // services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
 
             return services;
         }
